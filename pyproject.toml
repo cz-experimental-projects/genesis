@@ -9,7 +9,6 @@ readme = "README.md"
 python = "^3.10"
 raylib = "^4.2.1.2"
 events = "^0.4"
-panel = "^0.14.2"
 
 
 [build-system]
