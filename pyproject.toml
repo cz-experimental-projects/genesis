@@ -2,12 +2,13 @@
 name = "genesis"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["winterSteve25", "RasterMk2"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
 raylib = "^4.2.1.2"
+events = "^0.4"
 
 
 [build-system]

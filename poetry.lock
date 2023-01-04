@@ -78,6 +78,17 @@ files = [
 pycparser = "*"
 
 [[package]]
+name = "events"
+version = "0.4"
+description = "Bringing the elegance of C# EventHandler to Python"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "Events-0.4.tar.gz", hash = "sha256:01d9dd2a061f908d74a89fa5c8f07baa694f02a2a5974983663faaf7a97180f5"},
+]
+
+[[package]]
 name = "inflection"
 version = "0.5.1"
 description = "A port of Ruby on Rails inflector to Python"
@@ -144,4 +155,4 @@ inflection = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "fef0097410046dce53177059e4d6f8c032d4bcc15187a3330bb546d369e20d9f"
+content-hash = "f67be724048e819340f0e415321719645d43bfaeca29f54def50d62be9b97170"
