@@ -1,6 +1,14 @@
 import random
 
-from pyray import Color
+from pyray import Color, Vector2
+from math import cos, sin, radians
+
+
+def from_angle_magnitude(angle: float, magnitude: float) -> Vector2:
+    angle_radians = radians(angle)
+    x = cos(angle_radians) * magnitude
+    y = sin(angle_radians) * magnitude
+    return Vector2(x, y)
 
 
 def check_chance(chance: float) -> bool:

@@ -17,9 +17,11 @@ def handle_input() -> None:
             lambda organ: ColorGene(COLOR_RED, organ),
             lambda organ: ShapeGene(RectangleShape(10, 10), organ)
         ])
-        o.add_child_organ(Organ([
+        co = Organ([
             lambda organ: ShapeGene(CircleShape(5), organ)
-        ]))
+        ])
+        o.add_child_organ(co)
+        co.move_pos_local_space(10, 0)
         spawn_at_mouse(o)
 
     focused_organ = ORGAN_DETAIL_UI.organ

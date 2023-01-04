@@ -44,6 +44,5 @@ class World:
 
     # Spawn an organism at the given x-y coordinate in the world
     def spawn(self, organ: Organ, world_x: int, world_y: int) -> None:
-        organ.world_x = world_x
-        organ.world_y = world_y
+        organ.move_pos_world_space(world_x, world_y)
         self.organisms_add_queue.append(organ)

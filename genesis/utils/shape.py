@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+from math import cos, sin, radians
 from abc import ABC
 from pyray import *
 
 from genesis.utils.colors import COLOR_WHITE
+from genesis.utils.utilities import from_angle_magnitude
 
 
 # Shape is a class that represents the visual appearance of an organ. It has a number of sides, a radius,
@@ -38,6 +40,10 @@ class Shape(ABC):
     def apply_y_offset(self, y) -> float:
         pass
 
+    # Get the local space for a position on the edge of given index
+    def get_edge(self, angle: float) -> Vector2:
+        pass
+
     # Create an empty shape with rotation 0, and white color
     @staticmethod
     def empty() -> Shape:
@@ -68,17 +74,20 @@ class PolygonShape(Shape):
     def apply_y_offset(self, y) -> float:
         return y - self.radius
 
+    def get_edge(self, angle: float) -> Vector2:
+        return from_angle_magnitude(angle, self.radius)
+
 
 class RectangleShape(Shape):
     width: int
     height: int
     origin: Vector2
 
-    def __init__(self, width: int, height: int, origin: Vector2 = Vector2(0.5, 0.5), rotation: float = 0, color: Color = COLOR_WHITE) -> None:
+    def __init__(self, width: int, height: int, origin: Vector2 = None, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
         super().__init__(rotation, color)
         self.width = width
         self.height = height
-        self.origin = origin
+        self.origin = Vector2(width * 0.5, height * 0.5) if origin is None else origin
 
     def render(self, x: int, y: int) -> None:
         draw_rectangle_pro(Rectangle(x, y, self.width, self.height), self.origin, self.rotation, self.color)
@@ -90,10 +99,18 @@ class RectangleShape(Shape):
         return self.height
 
     def apply_x_offset(self, x) -> float:
-        return x
+        return x - self.origin.x
 
     def apply_y_offset(self, y) -> float:
-        return y
+        return y - self.origin.x
+
+    def get_edge(self, angle: float) -> Vector2:
+        # Convert the angle to radians
+        angle_radians = radians(angle)
+        # Calculate the x and y coordinates of the point on the circumference
+        x = self.origin.x + (self.width / 2) * cos(angle_radians)
+        y = self.origin.y + (self.height / 2) * sin(angle_radians)
+        return Vector2(x, y)
 
 
 class CircleShape(Shape):
@@ -117,3 +134,6 @@ class CircleShape(Shape):
 
     def apply_y_offset(self, y) -> float:
         return y - self.radius
+
+    def get_edge(self, angle: float) -> Vector2:
+        return from_angle_magnitude(angle, self.radius)

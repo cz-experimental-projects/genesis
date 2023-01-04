@@ -29,7 +29,7 @@ class Gene(ABC):
     def update(self) -> None:
         pass
 
-    def draw_gene_details(self, y_level) -> None:
+    def draw_gene_details(self, y_level: int) -> None:
         pass
 
 
@@ -57,10 +57,15 @@ class Organ:
 
     # The shape of this organ
     shape: Shape
+
     # The x-coordinate of this organ in the world
     world_x: int
     # The y-coordinate of this organ in the world
     world_y: int
+    # The x-coordinate of this organ in the local space relative to its parent
+    local_x: int
+    # The y-coordinate of this organ in the local space relative to its parent
+    local_y: int
 
     # Things this organism wants to do but only if there is organs to receive it will it have an effect
     urges: Events
@@ -126,7 +131,7 @@ class Organ:
 
         # Draw this organ if it has a shape
         if self.shape is not None:
-            self.shape.render(self.world_x, self.world_y)
+            self.shape.render(int(self.world_x), int(self.world_y))
 
         # Draw the child organs
         for organ in self.children_organs:
@@ -149,7 +154,7 @@ class Organ:
             self.darkened = False
 
     # Draw custom organ details if there is any
-    def draw_organ_details(self, y_level):
+    def draw_organ_details(self, y_level: int):
         # If genes have not been initialized we do not draw
         if not self.initialized:
             return
@@ -165,8 +170,43 @@ class Organ:
         self.to_remove = True
         if self.parent_organ is not None:
             self.parent_organ.children_organs.remove(self)
+        if len(self.children_organs):
+            for child in self.children_organs:
+                child.remove()
 
     # Add a child organ to this organ
     def add_child_organ(self, organ: Organ) -> None:
         self.children_organs.append(organ)
         organ.parent_organ = self
+
+    def move_pos_world_space(self, x: int, y: int) -> None:
+        self.world_x = x
+        self.world_y = y
+
+        if self.parent_organ is not None:
+            self.local_x = self.world_x - self.parent_organ.world_x
+            self.local_y = self.world_y - self.parent_organ.world_y
+        else:
+            self.local_x = 0
+            self.local_y = 0
+
+        for child in self.children_organs:
+            child.world_x = self.world_x + child.local_x
+            child.world_y = self.world_y + child.local_y
+
+    def move_pos_local_space(self, x: int, y: int) -> None:
+        self.local_x = x
+        self.local_y = y
+
+        if self.parent_organ is not None:
+            self.world_x = self.local_x + self.parent_organ.world_x
+            self.world_y = self.local_y + self.parent_organ.world_y
+        else:
+            self.world_x = self.local_x
+            self.world_y = self.local_y
+            self.local_x = 0
+            self.local_y = 0
+
+        for child in self.children_organs:
+            child.world_x = self.world_x + child.local_x
+            child.world_y = self.world_y + child.local_y
