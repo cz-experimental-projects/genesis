@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from abc import ABC
 from typing import Optional, Callable
-
 from events import Events
+from pyray import is_mouse_button_released
 
-from genesis.input import is_mouse_over_world_space
 from genesis.utils.shape import Shape
+from genesis.utils.utilities import darken_color, lighten_color
 
 
 # Gene is an abstract class that represents a genetic trait in an Organ
@@ -29,6 +29,9 @@ class Gene(ABC):
     def update(self) -> None:
         pass
 
+    def draw_gene_details(self, y_level) -> None:
+        pass
+
 
 # Organ is a class that represents a functional unit in an organism. It has DNA and child organs,
 # and it can update itself, draw itself, and remove itself.
@@ -37,6 +40,10 @@ class Organ:
     to_remove: bool
     # A flag indicating whether this organ has been initialized
     initialized: bool
+    # A flag to indicate if darken color change has been made
+    darkened: bool
+    # A flag to indicate if lighten color change has been made
+    lightened: bool
 
     # The list of genes that belong to this organ
     dna: list[Gene]
@@ -61,6 +68,8 @@ class Organ:
     def __init__(self, dna: list[Callable[[Organ], Gene]]):
         self.to_remove = False
         self.initialized = False
+        self.darkened = False
+        self.lightened = True
 
         self.dna = []
         self.dominant_dna = []
@@ -110,18 +119,46 @@ class Organ:
             organ.update()
 
     # Draw this organ and all of its children
-    def draw(self) -> None:
+    def draw(self, organ_detail_ui) -> None:
+        # If genes have not been initialized we do not draw
+        if not self.initialized:
+            return
+
         # Draw this organ if it has a shape
         if self.shape is not None:
             self.shape.render(self.world_x, self.world_y)
 
         # Draw the child organs
         for organ in self.children_organs:
-            organ.draw()
+            organ.draw(organ_detail_ui)
 
-        # TODO
-        if is_mouse_over_world_space(self.world_x, self.world_y, ):
-            pass
+        from genesis.input import is_mouse_over_world_space
+
+        # If mouse is hovering over, display options
+        if is_mouse_over_world_space(self.shape.apply_x_offset(self.world_x), self.shape.apply_y_offset(self.world_y), self.shape.get_width(), self.shape.get_height()):
+            if is_mouse_button_released(0):
+                if organ_detail_ui.organ is not self:
+                    organ_detail_ui.organ = self
+            if not self.darkened:
+                self.shape.color = darken_color(self.shape.color)
+                self.darkened = True
+                self.lightened = False
+        elif not self.lightened:
+            self.shape.color = lighten_color(self.shape.color)
+            self.lightened = True
+            self.darkened = False
+
+    # Draw custom organ details if there is any
+    def draw_organ_details(self, y_level):
+        # If genes have not been initialized we do not draw
+        if not self.initialized:
+            return
+
+        for gene in self.dominant_dna:
+            gene.draw_gene_details(y_level)
+
+        for gene in self.dna:
+            gene.draw_gene_details(y_level)
 
     # Mark this organ for removal and remove it from its parent's children list
     def remove(self) -> None:

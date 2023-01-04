@@ -34,9 +34,9 @@ class World:
         self.organisms_add_queue.clear()
 
     # Draw all the organisms in the world
-    def draw(self) -> None:
+    def draw(self, organ_detail_ui) -> None:
         for organism in self.organisms:
-            organism.draw()
+            organism.draw(organ_detail_ui)
 
     # Spawn an organism at the given position in the world
     def spawn_with_vec2(self, organ: Organ, position: Vector2):
