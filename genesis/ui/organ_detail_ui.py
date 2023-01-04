@@ -18,6 +18,9 @@ class OrganDetailsUI:
     # The margin at the bottom of the panel, in pixels
     margin_down: int
 
+    # The amount of space between each element, in pixels
+    spacing: int
+
     # The width of the panel, in pixels
     panel_w: int
     # The height of the panel, in pixels
@@ -38,10 +41,12 @@ class OrganDetailsUI:
         # Initialize the organ attribute to None and the margins, panel dimensions, and expanded_children_organs flag to their default values
         self.organ = None
 
-        self.margin_left = 5
+        self.margin_left = 10
         self.margin_right = 10
-        self.margin_up = 15
-        self.margin_down = 0
+        self.margin_up = 5
+        self.margin_down = 5
+ 
+        self.spacing = 5
 
         self.panel_w = 0
         self.panel_h = 0
@@ -54,6 +59,7 @@ class OrganDetailsUI:
         self.genes = ExpandableList("Genes", None, None)
         self.dominant_genes = ExpandableList("Dominant Genes", None, None)
 
+    # noinspection DuplicatedCode
     def render(self):
         def render_children_organ(local_y) -> int:
             # Display the child organs as buttons
@@ -78,7 +84,7 @@ class OrganDetailsUI:
                 child_rect = Rectangle(
                     self.relative_to_panel_x(40),
                     self.relative_to_panel_y(local_y),
-                    self - 40,
+                    self.maximum_width_in_panel() - 40,
                     20
                 )
 
@@ -105,25 +111,25 @@ class OrganDetailsUI:
         self.y_level = 0
 
         # Create a panel to display the organ details
-        gui_panel(Rectangle(self.panel_x, self.panel_y, self.panel_w, self.panel_h), "Organ details")
+        gui_panel(Rectangle(self.panel_x, self.panel_y, self.panel_w, self.panel_h), "Organ Details")
 
         self.start_box_group()
         # Display the x-coordinate and y-coordinate of the organ
         gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10), "World X: {x:.1f}".format(x=self.organ.world_x))
-        gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"World Y: {y:.1f}".format(y=self.organ.world_y))
-        self.y_level += 15
+        gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5, True), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"World Y: {y:.1f}".format(y=self.organ.world_y))
+        self.y_level += 10 + self.spacing
 
         # Display the x-coordinate and y-coordinate of the organ
         gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10), "Local X: {x:.1f}".format(x=self.organ.local_x))
-        gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"Local Y: {y:.1f}".format(y=self.organ.local_y))
-        self.y_level += 15
+        gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5, True), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"Local Y: {y:.1f}".format(y=self.organ.local_y))
+        self.y_level += 10 + self.spacing
 
         # Display the shape of the organ
         gui_label(
             Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 10),
             "Shape: {shape}".format(shape=self.organ.shape.__class__.__name__)
         )
-        self.y_level += 15
+        self.y_level += 10 + self.spacing
         self.end_box_group("Basic Information")
 
         self.start_box_group()
@@ -132,21 +138,25 @@ class OrganDetailsUI:
             if gui_button(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20), "Parent Organ"):
                 # Focus on the parent organ
                 self.organ = self.organ.parent_organ
-            self.y_level += 25
+            self.y_level += 20 + self.spacing
 
         # Display an expandable list of all the children organs
         self.children_organ.rect = Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20)
         self.children_organ.render_callback = render_children_organ
-        self.y_level += self.children_organ.render(self.y_level) + 5
+        self.y_level += self.children_organ.render(self.y_level) + self.spacing
         self.end_box_group("Hierarchical Organs")
 
+        self.start_box_group()
         self.genes.rect = Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20)
         self.genes.render_callback = lambda y: render_genes(self.organ.dna, y)
-        self.y_level += self.genes.render(self.y_level) + 5
+        self.y_level += self.genes.render(self.y_level) + self.spacing
 
         self.dominant_genes.rect = Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20)
         self.dominant_genes.render_callback = lambda y: render_genes(self.organ.dominant_dna, y)
-        self.y_level += self.dominant_genes.render(self.y_level) + 5
+        self.y_level += self.dominant_genes.render(self.y_level) + self.spacing
+        self.end_box_group("Genetics")
+
+        self.organ.draw_organ_details(self)
 
         # Delete button used to remove this organ
         if gui_button(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20), "Delete Organ"):
@@ -155,8 +165,8 @@ class OrganDetailsUI:
 
     def relative_to_panel_x(self, x, ignore_margin: bool = False) -> int:
         if ignore_margin:
-            return self.panel_x + 7 + x
-        return self.panel_x + 7 + self.margin_left + x
+            return self.panel_x + x
+        return self.panel_x + self.margin_left + x
 
     def relative_to_panel_y(self, y, ignore_margin: bool = False) -> int:
         if ignore_margin:
@@ -172,21 +182,23 @@ class OrganDetailsUI:
 
     def start_box_group(self) -> None:
         self.captured_y_level = self.y_level
-        self.y_level += self.margin_down
-        self.margin_right += 10
+        self.y_level += self.margin_up * 2
+        self.margin_right *= 2
+        self.margin_left *= 2
 
     def end_box_group(self, title: str) -> None:
-        self.margin_right -= 10
+        self.margin_right *= 0.5
+        self.margin_left *= 0.5
 
         # A group to box the positions and shape
         gui_group_box(
             Rectangle(
-                self.relative_to_panel_x(0, True),
-                self.relative_to_panel_y(self.captured_y_level, True),
+                self.relative_to_panel_x(0),
+                self.relative_to_panel_y(self.captured_y_level),
                 self.maximum_width_in_panel(),
                 self.y_level - self.captured_y_level + self.margin_down
             ),
 
             title)
 
-        self.y_level += 5
+        self.y_level += self.margin_down + self.spacing * 2

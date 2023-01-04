@@ -29,7 +29,7 @@ class Gene(ABC):
     def update(self) -> None:
         pass
 
-    def draw_gene_details(self, y_level: int) -> None:
+    def draw_gene_details(self, ui) -> None:
         pass
 
 
@@ -154,16 +154,10 @@ class Organ:
             self.darkened = False
 
     # Draw custom organ details if there is any
-    def draw_organ_details(self, y_level: int):
+    def draw_organ_details(self, ui):
         # If genes have not been initialized we do not draw
         if not self.initialized:
             return
-
-        for gene in self.dominant_dna:
-            gene.draw_gene_details(y_level)
-
-        for gene in self.dna:
-            gene.draw_gene_details(y_level)
 
     # Mark this organ for removal and remove it from its parent's children list
     def remove(self) -> None:
