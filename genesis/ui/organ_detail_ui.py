@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, Callable
 
 from pyray import *
-from genesis.organisms.organ import Organ
+from genesis.organisms.organ import Organ, Gene
 from genesis.ui.expandable_list import ExpandableList
 
 
@@ -55,19 +55,19 @@ class OrganDetailsUI:
 
         self.y_level = 0
 
-        self.children_organ = ExpandableList("Children Organs", None, None)
-        self.genes = ExpandableList("Genes", None, None)
-        self.dominant_genes = ExpandableList("Dominant Genes", None, None)
+        self.children_organ = ExpandableList("Children Organs", None, None, self)
+        self.genes = ExpandableList("Genes", None, None, self)
+        self.dominant_genes = ExpandableList("Dominant Genes", None, None, self)
 
     # noinspection DuplicatedCode
     def render(self):
-        def render_children_organ(local_y) -> int:
+        def render_children_organ():
             # Display the child organs as buttons
             for child_organ in self.organ.children_organs:
                 child_rect = Rectangle(
-                    self.relative_to_panel_x(40),
-                    self.relative_to_panel_y(local_y),
-                    self.maximum_width_in_panel() - 40,
+                    self.relative_to_panel_x(0),
+                    self.relative_to_panel_y(self.y_level),
+                    self.maximum_width_in_panel(),
                     20
                 )
 
@@ -76,23 +76,19 @@ class OrganDetailsUI:
                     self.organ = child_organ
                     self.children_organ.expanded = False
 
-                local_y += 25
-            return local_y
+                self.y_level += 25
 
-        def render_genes(genes, local_y) -> int:
+        def render_genes(genes):
             for gene in genes:
                 child_rect = Rectangle(
-                    self.relative_to_panel_x(40),
-                    self.relative_to_panel_y(local_y),
-                    self.maximum_width_in_panel() - 40,
+                    self.relative_to_panel_x(0),
+                    self.relative_to_panel_y(self.y_level),
+                    self.maximum_width_in_panel(),
                     20
                 )
 
-                if gui_button(child_rect, gene.__class__.__name__):
-                    pass
-
-                local_y += 25
-            return local_y
+                if self.gui_gene_button(child_rect, gene):
+                    self.organ.remove_gene(gene)
 
         # Do not render if there is no organ to display details for
         if self.organ is None:
@@ -123,13 +119,6 @@ class OrganDetailsUI:
         gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10), "Local X: {x:.1f}".format(x=self.organ.local_x))
         gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5, True), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"Local Y: {y:.1f}".format(y=self.organ.local_y))
         self.y_level += 10 + self.spacing
-
-        # Display the shape of the organ
-        gui_label(
-            Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 10),
-            "Shape: {shape}".format(shape=self.organ.shape.__class__.__name__)
-        )
-        self.y_level += 10 + self.spacing
         self.end_box_group("Basic Information")
 
         self.start_box_group()
@@ -143,17 +132,17 @@ class OrganDetailsUI:
         # Display an expandable list of all the children organs
         self.children_organ.rect = Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20)
         self.children_organ.render_callback = render_children_organ
-        self.y_level += self.children_organ.render(self.y_level) + self.spacing
+        self.children_organ.render()
         self.end_box_group("Hierarchical Organs")
 
         self.start_box_group()
         self.genes.rect = Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20)
-        self.genes.render_callback = lambda y: render_genes(self.organ.dna, y)
-        self.y_level += self.genes.render(self.y_level) + self.spacing
+        self.genes.render_callback = lambda: render_genes(self.organ.dna)
+        self.genes.render()
 
         self.dominant_genes.rect = Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel(), 20)
-        self.dominant_genes.render_callback = lambda y: render_genes(self.organ.dominant_dna, y)
-        self.y_level += self.dominant_genes.render(self.y_level) + self.spacing
+        self.dominant_genes.render_callback = lambda: render_genes(self.organ.dominant_dna)
+        self.dominant_genes.render()
         self.end_box_group("Genetics")
 
         self.organ.draw_organ_details(self)
@@ -167,6 +156,11 @@ class OrganDetailsUI:
         if ignore_margin:
             return self.panel_x + x
         return self.panel_x + self.margin_left + x
+
+    def relative_to_panel_x_from_right(self, x, ignore_margin: bool = False) -> int:
+        if ignore_margin:
+            return self.panel_x + x
+        return self.panel_x + self.margin_right + x
 
     def relative_to_panel_y(self, y, ignore_margin: bool = False) -> int:
         if ignore_margin:
@@ -202,3 +196,27 @@ class OrganDetailsUI:
             title)
 
         self.y_level += self.margin_down + self.spacing * 2
+
+    def gui_gene_button(self, rect: Rectangle, gene: Gene) -> bool:
+        size = rect.width * 0.9
+
+        gui_status_bar(Rectangle(
+            rect.x,
+            rect.y,
+            size,
+            rect.height
+        ), gene.__class__.__name__)
+
+        delete = gui_button(Rectangle(
+            rect.x + size + self.spacing,
+            rect.y,
+            rect.width * 0.1 - self.spacing,
+            rect.height
+        ), gui_icon_text(GuiIconName.ICON_FILE_DELETE, ""))
+
+        self.y_level += rect.height + self.spacing
+        self.margin_left += 30
+        gene.draw_gene_details(self)
+        self.margin_left -= 30
+
+        return delete

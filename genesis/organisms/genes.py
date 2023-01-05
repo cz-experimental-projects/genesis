@@ -1,8 +1,9 @@
 from typing import Callable
-from pyray import get_frame_time, Color
+from pyray import get_frame_time, Color, gui_label, Rectangle, gui_color_picker
 
 from genesis.organisms.organ import Gene, Organ
 from genesis.utils.shape import Shape
+from genesis.utils.utilities import color_str, color_compare, color_cpy
 
 
 # MaturityGene is a Gene that tracks the maturity of an Organ
@@ -43,6 +44,7 @@ class MaturityGene(Gene):
 class ColorGene(Gene):
     # The color that this Gene sets for the Organ's Shape
     color: Color
+    old_color: Color
 
     def __init__(self, color: Color, organ: Organ):
         # Initialize the Gene with the organ and dominant attributes
@@ -52,7 +54,29 @@ class ColorGene(Gene):
 
     # Set the color of the Organ's Shape when the Gene is initialized
     def initialize(self) -> None:
+        self.old_color = self.organ.shape.color
         self.organ.shape.color = self.color
+
+    def uninitialize(self) -> None:
+        self.organ.shape.color = self.old_color
+
+    def draw_gene_details(self, ui) -> None:
+        # Display the color of the organ
+        gui_label(
+            Rectangle(ui.relative_to_panel_x(0), ui.relative_to_panel_y(ui.y_level), ui.maximum_width_in_panel(), 10),
+            "Color: {}".format(color_str(self.color))
+        )
+        ui.y_level += 10 + ui.spacing
+        color_last_frame = color_cpy(self.color)
+        self.color = gui_color_picker(
+            Rectangle(ui.relative_to_panel_x(0), ui.relative_to_panel_y(ui.y_level), 60, 60),
+            "Color",
+            self.color
+        )
+        ui.y_level += 60 + ui.spacing
+
+        if not color_compare(self.color, color_last_frame):
+            self.organ.shape.color = self.color
 
 
 # ShapeGene is a Gene that sets the Shape of an Organ
@@ -69,6 +93,17 @@ class ShapeGene(Gene):
     # Set the Shape of the Organ when the Gene is initialized
     def initialize(self) -> None:
         self.organ.shape = self.shape
+
+    def uninitialize(self) -> None:
+        self.organ.shape = None
+
+    def draw_gene_details(self, ui) -> None:
+        # Display the shape of the organ
+        gui_label(
+            Rectangle(ui.relative_to_panel_x(0), ui.relative_to_panel_y(ui.y_level), ui.maximum_width_in_panel(), 10),
+            "Shape: {}".format(self.shape.__class__.__name__)
+        )
+        ui.y_level += 10 + ui.spacing
 
 
 # HungerGene restricts the organ with energy

@@ -29,6 +29,11 @@ class Gene(ABC):
     def update(self) -> None:
         pass
 
+    # This method is called when Gene is about to be removed from an organ
+    def uninitialize(self) -> None:
+        pass
+
+    # This method is called to draw details about this gene in the OrganDetailsUI
     def draw_gene_details(self, ui) -> None:
         pass
 
@@ -129,13 +134,15 @@ class Organ:
         if not self.initialized:
             return
 
-        # Draw this organ if it has a shape
-        if self.shape is not None:
-            self.shape.render(int(self.world_x), int(self.world_y))
-
         # Draw the child organs
         for organ in self.children_organs:
             organ.draw(organ_detail_ui)
+
+        # Draw this organ if it has a shape
+        if self.shape is None:
+            return
+
+        self.shape.render(int(self.world_x), int(self.world_y))
 
         from genesis.input import is_mouse_over_world_space
 
@@ -204,3 +211,19 @@ class Organ:
         for child in self.children_organs:
             child.world_x = self.world_x + child.local_x
             child.world_y = self.world_y + child.local_y
+
+    def remove_gene(self, gene: Gene) -> None:
+        if gene.dominant and self.dominant_dna.count(gene):
+            gene.uninitialize()
+            self.dominant_dna.remove(gene)
+        elif self.dna.count(gene):
+            gene.uninitialize()
+            self.dna.remove(gene)
+
+    def add_gene(self, gene: Gene) -> None:
+        if gene.dominant:
+            self.dominant_dna.append(gene)
+        else:
+            self.dna.append(gene)
+
+        gene.initialize()

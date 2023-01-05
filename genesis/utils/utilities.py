@@ -23,8 +23,20 @@ def check_chance(chance: float) -> bool:
 
 
 def darken_color(color: Color) -> Color:
-    return Color(int(color.r * 0.9), int(color.g * 0.9), int(color.b * 0.9), color.a)
+    return Color(int(color.r * 0.8), int(color.g * 0.8), int(color.b * 0.8), color.a)
 
 
 def lighten_color(color: Color) -> Color:
-    return Color(int(color.r / 0.9), int(color.g / 0.9), int(color.b / 0.9), color.a)
+    return Color(int(color.r / 0.8), int(color.g / 0.8), int(color.b / 0.8), color.a)
+
+
+def color_str(color: Color) -> str:
+    return "Color: {r}, {g}, {b}, {a}".format(r=color.r, g=color.g, b=color.b, a=color.a)
+
+
+def color_compare(a: Color, b: Color) -> bool:
+    return a.r == b.r and a.g == b.g and a.b == b.b and a.a == b.a
+
+
+def color_cpy(color: Color) -> Color:
+    return Color(color.r, color.g, color.b, color.a)
