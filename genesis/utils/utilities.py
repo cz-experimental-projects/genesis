@@ -1,4 +1,5 @@
 import random
+from typing import re
 
 from pyray import Color, Vector2
 from math import cos, sin, radians
@@ -40,3 +41,13 @@ def color_compare(a: Color, b: Color) -> bool:
 
 def color_cpy(color: Color) -> Color:
     return Color(color.r, color.g, color.b, color.a)
+
+
+def is_float(s: str) -> bool:
+    return re.match(r'^-?\d+(?:\.\d+)$', s) is not None
+
+
+def is_int(s: str) -> bool:
+    if s[0] in ('-', '+'):
+        return s[1:].isdigit()
+    return s.isdigit()

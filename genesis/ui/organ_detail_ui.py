@@ -3,6 +3,7 @@ from typing import Optional, Callable
 from pyray import *
 from genesis.organisms.organ import Organ, Gene
 from genesis.ui.expandable_list import ExpandableList
+from genesis.utils.utilities import is_float, is_int
 
 
 class OrganDetailsUI:
@@ -30,12 +31,27 @@ class OrganDetailsUI:
     # The y-coordinate of the top-left corner of the panel, in pixels
     panel_y: int
 
+    # Current rendering Y-Level, used to list items in the ui vertically
     y_level: int
+    # Captures y level at the moment, used for making box groups
     captured_y_level: int
 
+    # Expandable list of child organs
     children_organ: ExpandableList
+    # Expandable list of genes
     genes: ExpandableList
+    # Expandable list of dominant genes
     dominant_genes: ExpandableList
+
+    editing_world_x: bool
+    editing_world_y: bool
+    editing_local_x: bool
+    editing_local_y: bool
+
+    world_x_text: str
+    world_y_text: str
+    local_x_text: str
+    local_y_text: str
 
     def __init__(self):
         # Initialize the organ attribute to None and the margins, panel dimensions, and expanded_children_organs flag to their default values
@@ -58,6 +74,16 @@ class OrganDetailsUI:
         self.children_organ = ExpandableList("Children Organs", None, None, self)
         self.genes = ExpandableList("Genes", None, None, self)
         self.dominant_genes = ExpandableList("Dominant Genes", None, None, self)
+
+        self.editing_world_x = False
+        self.editing_world_y = False
+        self.editing_local_x = False
+        self.editing_local_y = False
+
+        self.world_x_text = ""
+        self.world_y_text = ""
+        self.local_x_text = ""
+        self.local_y_text = ""
 
     # noinspection DuplicatedCode
     def render(self):
@@ -109,17 +135,47 @@ class OrganDetailsUI:
         # Create a panel to display the organ details
         gui_panel(Rectangle(self.panel_x, self.panel_y, self.panel_w, self.panel_h), "Organ Details")
 
+        self.world_x_text = "{:.1f}".format(self.organ.world_x)
+        self.world_y_text = "{:.1f}".format(self.organ.world_y)
+        self.local_x_text = "{:.1f}".format(self.organ.local_x)
+        self.local_y_text = "{:.1f}".format(self.organ.local_y)
+
         self.start_box_group()
+        eighth_width = self.maximum_width_in_panel() * 0.125
+
         # Display the x-coordinate and y-coordinate of the organ
-        gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10), "World X: {x:.1f}".format(x=self.organ.world_x))
-        gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5, True), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"World Y: {y:.1f}".format(y=self.organ.world_y))
+        gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), eighth_width, 10), "World X:")
+        if gui_text_box(Rectangle(self.relative_to_panel_x(eighth_width), self.relative_to_panel_y(self.y_level), eighth_width * 3, 10), self.world_x_text, 6, self.editing_world_x):
+            self.editing_world_x = not self.editing_world_x
+        gui_label(Rectangle(self.relative_to_panel_x(eighth_width * 4), self.relative_to_panel_y(self.y_level), eighth_width, 10), "World Y:")
+        if gui_text_box(Rectangle(self.relative_to_panel_x(eighth_width * 5), self.relative_to_panel_y(self.y_level), eighth_width * 3, 10), self.world_y_text, 6, self.editing_world_y):
+            self.editing_world_y = not self.editing_world_y
+
         self.y_level += 10 + self.spacing
 
         # Display the x-coordinate and y-coordinate of the organ
-        gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10), "Local X: {x:.1f}".format(x=self.organ.local_x))
-        gui_label(Rectangle(self.relative_to_panel_x(self.maximum_width_in_panel() * 0.5, True), self.relative_to_panel_y(self.y_level), self.maximum_width_in_panel() * 0.5, 10),"Local Y: {y:.1f}".format(y=self.organ.local_y))
+        gui_label(Rectangle(self.relative_to_panel_x(0), self.relative_to_panel_y(self.y_level), eighth_width, 10), "Local X:")
+        if gui_text_box(Rectangle(self.relative_to_panel_x(eighth_width), self.relative_to_panel_y(self.y_level), eighth_width * 3, 10), self.local_x_text, 6, self.editing_local_x):
+            self.editing_local_x = not self.editing_local_x
+        gui_label(Rectangle(self.relative_to_panel_x(eighth_width * 4), self.relative_to_panel_y(self.y_level), eighth_width, 10), "Local Y:")
+        if gui_text_box(Rectangle(self.relative_to_panel_x(eighth_width * 5), self.relative_to_panel_y(self.y_level), eighth_width * 3, 10), self.local_y_text, 6, self.editing_local_y):
+            self.editing_local_y = not self.editing_local_y
+
         self.y_level += 10 + self.spacing
         self.end_box_group("Basic Information")
+
+        if self.editing_world_x:
+            if is_int(self.world_x_text):
+                self.organ.move_pos_world_space(int(self.world_x_text), self.organ.world_y)
+        if self.editing_world_y:
+            if is_int(self.world_y_text):
+                self.organ.move_pos_world_space(self.organ.world_x, int(self.world_y_text))
+        if self.editing_local_x:
+            if is_int(self.local_x_text):
+                self.organ.move_pos_local_space(int(self.local_x_text), self.organ.local_y)
+        if self.editing_local_y:
+            if is_int(self.local_y_text):
+                self.organ.move_pos_local_space(self.organ.local_x, int(self.local_y_text))
 
         self.start_box_group()
         # Display a button that is a reference to the parent organ of this organ if present
