@@ -5,7 +5,7 @@ from abc import ABC
 from pyray import *
 
 from genesis.utils.colors import COLOR_WHITE
-from genesis.utils.utilities import from_angle_magnitude
+from genesis.utils.utilities import from_angle_magnitude, vec2_str
 
 
 # Shape is a class that represents the visual appearance of an organ. It has a number of sides, a radius,
@@ -15,10 +15,13 @@ class Shape(ABC):
     rotation: float
     # The color of the shape
     color: Color
+    # Flag to determine if this is an empty shape
+    is_empty: bool
 
     def __init__(self, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
         self.rotation = rotation
         self.color = color
+        self.is_empty = False
 
     # Render the shape at the given x-y coordinate
     def render(self, x: int, y: int) -> None:
@@ -47,14 +50,19 @@ class Shape(ABC):
     # Create an empty shape with rotation 0, and white color
     @staticmethod
     def empty() -> Shape:
-        return Shape(0, COLOR_WHITE)
+        s = Shape(0, COLOR_WHITE)
+        s.is_empty = True
+        return s
+
+    def draw_shape_detail_in_ui(self, ui) -> None:
+        pass
 
 
 class PolygonShape(Shape):
     side_count: int
     radius: float
 
-    def __init__(self, side_count: int, radius: float, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
+    def __init__(self, side_count: int = 4, radius: float = 5.0, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
         super().__init__(rotation, color)
         self.side_count = side_count
         self.radius = radius
@@ -77,13 +85,20 @@ class PolygonShape(Shape):
     def get_edge(self, angle: float) -> Vector2:
         return from_angle_magnitude(angle, self.radius)
 
+    def draw_shape_detail_in_ui(self, ui) -> None:
+        self.side_count = int(gui_slider_bar(ui.full_rect_in_panel(20), "", "", self.side_count, 3, 12))
+        gui_label(ui.full_rect_in_panel(20), "  Side Count: {}".format(self.side_count))
+        ui.add_spacing(20)
+        gui_label(ui.full_rect_in_panel(10), "Radius: {:.2f}".format(self.radius))
+        ui.add_spacing(10)
+
 
 class RectangleShape(Shape):
     width: int
     height: int
     origin: Vector2
 
-    def __init__(self, width: int, height: int, origin: Vector2 = None, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
+    def __init__(self, width: int = 10, height: int = 10, origin: Vector2 = None, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
         super().__init__(rotation, color)
         self.width = width
         self.height = height
@@ -112,11 +127,18 @@ class RectangleShape(Shape):
         y = self.origin.y + (self.height / 2) * sin(angle_radians)
         return Vector2(x, y)
 
+    def draw_shape_detail_in_ui(self, ui) -> None:
+        gui_label(ui.half_rect_in_panel_left(10), "Width: {}".format(self.width))
+        gui_label(ui.half_rect_in_panel_right(10), "Height: {}".format(self.height))
+        ui.add_spacing(10)
+        gui_label(ui.full_rect_in_panel(10), "Origin: {}".format(vec2_str(self.origin)))
+        ui.add_spacing(10)
+
 
 class CircleShape(Shape):
     radius: float
 
-    def __init__(self, radius: float, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
+    def __init__(self, radius: float = 5.0, rotation: float = 0, color: Color = COLOR_WHITE) -> None:
         super().__init__(rotation, color)
         self.radius = radius
 
@@ -137,3 +159,7 @@ class CircleShape(Shape):
 
     def get_edge(self, angle: float) -> Vector2:
         return from_angle_magnitude(angle, self.radius)
+
+    def draw_shape_detail_in_ui(self, ui) -> None:
+        gui_label(ui.full_rect_in_panel(10), "Radius: {:.2f}".format(self.radius))
+        ui.add_spacing(10)

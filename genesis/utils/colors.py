@@ -26,3 +26,6 @@ COLOR_BLACK: Color = Color(0, 0, 0, 255)
 COLOR_BLANK: Color = Color(0, 0, 0, 0)
 COLOR_MAGENTA: Color = Color(255, 0, 255, 255)
 COLOR_RAY_WHITE: Color = Color(245, 245, 245, 255)
+
+BACKGROUND_COLOR: Color = Color(0, 43, 38, 255)
+BACKGROUND_SCROLL_COLOR: Color = Color(13, 84, 63, 160)

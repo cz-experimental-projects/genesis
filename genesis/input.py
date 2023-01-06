@@ -1,30 +1,17 @@
 from pyray import *
 
 import genesis
-from genesis import WORLD, CAMERA, MAXIMUM_ZOOM, MINIMUM_ZOOM, ORGAN_DETAIL_UI
-from genesis.organisms.genes import ColorGene, ShapeGene
+from genesis import WORLD, CAMERA, MAXIMUM_ZOOM, MINIMUM_ZOOM, ORGAN_DETAIL_UI, CREATE_GENE_WINDOW
 from genesis.organisms.organ import Organ
-from genesis.utils.colors import COLOR_RED
-from genesis.utils.shape import RectangleShape, CircleShape
 from genesis.utils.ease_functions import *
 
 
 # Handle input from the user
 def handle_input() -> None:
-    # If the T key is pressed, spawn an organ at the mouse position
-    if is_key_pressed(KeyboardKey.KEY_T):
-        o = Organ([
-            lambda organ: ColorGene(COLOR_RED, organ),
-            lambda organ: ShapeGene(RectangleShape(10, 10), organ)
-        ])
-        co = Organ([
-            lambda organ: ShapeGene(CircleShape(5), organ)
-        ])
-        o.add_child_organ(co)
-        co.move_pos_local_space(10, 0)
-        spawn_at_mouse(o)
-
     focused_organ = ORGAN_DETAIL_UI.organ
+
+    if is_mouse_button_pressed(1):
+        spawn_at_mouse(Organ.blank_organ())
 
     if focused_organ is None:
         # Zooming camera
@@ -46,11 +33,12 @@ def handle_input() -> None:
         CAMERA.target = vector2_lerp(CAMERA.target, Vector2(focused_organ.world_x, focused_organ.world_y), ease_out_cubic(get_frame_time()))
         CAMERA.zoom = lerp(CAMERA.zoom, 5, ease_out_cubic(get_frame_time()))
 
-        if ORGAN_DETAIL_UI.mouse_over():
+        if is_mouse_over_ui():
             return
 
         if is_mouse_button_released(0) or is_key_pressed(KeyboardKey.KEY_ESCAPE):
             ORGAN_DETAIL_UI.organ = None
+            CREATE_GENE_WINDOW.enabled = False
 
 
 # Spawn an organ at the mouse position in the world
@@ -72,6 +60,10 @@ def get_mouse_position() -> Vector2:
 def is_mouse_over_world_space(x, y, width, height) -> bool:
     mouse_pos = get_mouse_world_position()
     return x < mouse_pos.x < x + width and y < mouse_pos.y < y + height
+
+
+def is_mouse_over_ui() -> bool:
+    return (ORGAN_DETAIL_UI.mouse_over() and ORGAN_DETAIL_UI.organ is not None) or (CREATE_GENE_WINDOW.mouse_over() and CREATE_GENE_WINDOW.enabled)
 
 
 # Check if mouse is over an area in world space

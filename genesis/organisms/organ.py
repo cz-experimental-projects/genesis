@@ -5,7 +5,7 @@ from typing import Optional, Callable
 from events import Events
 from pyray import is_mouse_button_released
 
-from genesis.utils.shape import Shape
+from genesis.utils.shape import Shape, RectangleShape
 from genesis.utils.utilities import darken_color, lighten_color
 
 
@@ -88,8 +88,7 @@ class Organ:
         self.parent_organ = None
 
         self.shape = Shape.empty()
-        self.world_x = 0
-        self.world_y = 0
+        self.move_pos_local_space(0, 0)
 
         self.urges = Events((
             "on_walk",
@@ -108,14 +107,7 @@ class Organ:
     # Update this organ and all of its children
     def update(self) -> None:
         if not self.initialized:
-            # Initialize the genes
-            for gene in self.dna:
-                gene.initialize()
-
-            for gene in self.dominant_dna:
-                gene.initialize()
-
-            self.initialized = True
+            self.initialize_genes()
 
         # Update the genes
         for gene in self.dna:
@@ -139,12 +131,15 @@ class Organ:
             organ.draw(organ_detail_ui)
 
         # Draw this organ if it has a shape
-        if self.shape is None:
-            return
+        if self.shape is None or self.shape.is_empty:
+            return 
 
         self.shape.render(int(self.world_x), int(self.world_y))
 
-        from genesis.input import is_mouse_over_world_space
+        from genesis.input import is_mouse_over_world_space, is_mouse_over_ui
+
+        if is_mouse_over_ui():
+            return
 
         # If mouse is hovering over, display options
         if is_mouse_over_world_space(self.shape.apply_x_offset(self.world_x), self.shape.apply_y_offset(self.world_y), self.shape.get_width(), self.shape.get_height()):
@@ -179,6 +174,7 @@ class Organ:
     def add_child_organ(self, organ: Organ) -> None:
         self.children_organs.append(organ)
         organ.parent_organ = self
+        organ.move_pos_local_space(organ.local_x, organ.local_y)
 
     def move_pos_world_space(self, x: int, y: int) -> None:
         self.world_x = x
@@ -222,8 +218,27 @@ class Organ:
 
     def add_gene(self, gene: Gene) -> None:
         if gene.dominant:
+            if any(g.__class__ == gene.__class__ for g in self.dominant_dna):
+                return
             self.dominant_dna.append(gene)
         else:
+            if any(g.__class__ == gene.__class__ for g in self.dna):
+                return
             self.dna.append(gene)
 
         gene.initialize()
+
+    def initialize_genes(self) -> None:
+        # Initialize the genes
+        for gene in self.dna:
+            gene.initialize()
+
+        for gene in self.dominant_dna:
+            gene.initialize()
+
+        self.initialized = True
+
+    @staticmethod
+    def blank_organ() -> Organ:
+        from genesis.organisms.genes import ShapeGene
+        return Organ([lambda organ: ShapeGene(organ, RectangleShape(10, 10))])

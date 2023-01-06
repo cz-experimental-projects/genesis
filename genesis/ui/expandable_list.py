@@ -21,7 +21,7 @@ class ExpandableList:
         if gui_button(Rectangle(self.rect.x + 16, self.rect.y, self.rect.width - 16, self.rect.height), "{t} {list}".format(t="Collapse" if self.expanded else "Expand", list=self.list_name)):
             self.expanded = not self.expanded
 
-        self.ui.y_level += self.rect.height + self.ui.spacing
+        self.ui.add_spacing(self.rect.height)
 
         if self.expanded:
             self.ui.margin_left += 30
